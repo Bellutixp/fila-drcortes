@@ -32,7 +32,8 @@
     </div>
 
     <script>
-        const API = "http://192.168.0.110:3000";
+        
+const API = "https://fila-drcortes.onrender.com";
         async function chamar() {
             const res = await fetch(`${API}/chamar`, { method: 'POST' });
             if(res.status === 404) alert("Não há ninguém na fila!");
