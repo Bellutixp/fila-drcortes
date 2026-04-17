@@ -2,68 +2,127 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Controle - Dr. Cortes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. Cortes - Barbeiro</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Oswald', sans-serif; background: #000; color: white; padding: 20px; margin: 0; text-align: center; }
-        .logo-barbeiro { max-width: 150px; margin: 20px 0; }
-        .container { max-width: 800px; margin: 0 auto; background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        .btn-call { background: #fff; color: #000; padding: 20px; font-size: 22px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 10px; border: none; margin-bottom: 20px; text-transform: uppercase; font-family: 'Oswald', sans-serif; }
-        .btn-call:hover { background: #ccc; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #000; }
-        th, td { border-bottom: 1px solid #222; padding: 15px; text-align: left; }
-        th { color: #666; text-transform: uppercase; font-size: 14px; }
-        .btn-fin { background: #cc0000; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 5px; font-family: 'Oswald', sans-serif; text-transform: uppercase; }
-        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; background: #333; color: #fff; text-transform: uppercase; }
+        body { 
+            font-family: 'Oswald', sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            margin: 0;
+            color: #fff;
+            background-color: #000;
+            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+                              url('https://www.transparenttextures.com/patterns/stardust.png');
+            background-attachment: fixed;
+        }
+
+        .logo-img { max-width: 180px; margin-top: 10px; margin-bottom: 10px; }
+
+        .card { 
+            background: rgba(15, 15, 15, 0.95); 
+            backdrop-filter: blur(10px);
+            padding: 25px; 
+            border-radius: 15px; 
+            border: 2px solid #ffca28; 
+            max-width: 400px; 
+            margin: 10px auto; 
+            box-shadow: 0 0 30px rgba(255, 202, 40, 0.1); 
+        }
+
+        #atendimentoAtual {
+            background: #111;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        .nome-destaque { font-size: 35px; color: #fff; display: block; margin-top: 5px; text-transform: uppercase; }
+
+        button { 
+            background: #ffca28; 
+            color: #000; 
+            border: none; 
+            padding: 15px; 
+            font-size: 18px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-family: 'Oswald', sans-serif;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 0px #b8860b;
+        }
+        button:active { transform: translateY(3px); box-shadow: none; }
+
+        .btn-finalizar { background: #444; color: #fff; box-shadow: 0 4px 0px #222; }
+        
+        .lista-espera { 
+            text-align: left; 
+            margin-top: 30px; 
+            padding: 15px; 
+            background: #0a0a0a; 
+            border-radius: 10px; 
+            border-left: 3px solid #ffca28;
+        }
+
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 12px; border-bottom: 1px solid #222; font-size: 18px; color: #888; }
+
+        .btn-zerar { 
+            background: transparent; 
+            color: #ff4444; 
+            border: 1px solid #ff4444; 
+            font-size: 12px; 
+            margin-top: 40px; 
+            width: auto; 
+            padding: 5px 15px;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
-    <img src="logo.png" alt="Dr. Cortes" class="logo-barbeiro">
-    
-    <div class="container">
-        <button class="btn-call" onclick="chamar()">CHAMAR PRÓXIMO CLIENTE</button>
-
-        <table>
-            <thead>
-                <tr><th>Senha</th><th>Cliente</th><th>Status</th><th>Ações</th></tr>
-            </thead>
-            <tbody id="lista"></tbody>
-        </table>
+    <img src="logo.png" alt="Dr. Cortes" class="logo-img">
+    <div class="card">
+        <div id="atendimentoAtual">
+            <p style="color: #ffca28; margin: 0; font-size: 14px; font-weight:bold;">ATENDENDO AGORA:</p>
+            <span id="nomeFoco" class="nome-destaque">NINGUÉM</span>
+        </div>
+        <button onclick="chamarProximo()">🔔 CHAMAR PRÓXIMO</button>
+        <button class="btn-finalizar" onclick="finalizarAtendimento()">✅ FINALIZAR ATENDIMENTO</button>
+        <div class="lista-espera">
+            <p style="color: #ffca28; font-size: 14px; margin-top: 0; font-weight:bold;">PRÓXIMOS DA FILA:</p>
+            <ul id="lista"></ul>
+        </div>
+        <button class="btn-zerar" onclick="reiniciarSistema()">⚠️ ZERAR FILA (SENHA 1)</button>
     </div>
 
     <script>
-        
-const API = "https://fila-drcortes.onrender.com";
-        async function chamar() {
-            const res = await fetch(`${API}/chamar`, { method: 'POST' });
-            if(res.status === 404) alert("Não há ninguém na fila!");
-            atualizar();
+        const API = "https://fila-drcortes.onrender.com";
+        async function atualizarDados() {
+            try {
+                const resFila = await fetch(`${API}/fila`);
+                const fila = await resFila.json();
+                const listaUl = document.getElementById("lista");
+                listaUl.innerHTML = "";
+                fila.forEach(c => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<span style="color:#ffca28">#${c.senha}</span> - ${c.nome}`;
+                    listaUl.appendChild(li);
+                });
+                const resStatus = await fetch(`${API}/status`);
+                const status = await resStatus.json();
+                document.getElementById("nomeFoco").innerText = status.atual ? `#${status.atual.senha} - ${status.atual.nome}` : "NINGUÉM";
+            } catch (err) { console.log("Erro"); }
         }
-        async function finalizar(senha) {
-            await fetch(`${API}/finalizar`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ senha })
-            });
-            atualizar();
-        }
-        async function atualizar() {
-            const res = await fetch(`${API}/fila`);
-            const fila = await res.json();
-            let html = "";
-            fila.forEach(s => {
-                const isChamando = s.status === 'chamando';
-                html += `<tr>
-                    <td style="font-weight:bold; font-size: 20px;">${s.senha}</td>
-                    <td>${s.nome}</td>
-                    <td><span class="status-badge" style="${isChamando ? 'background:#fff; color:#000;' : ''}">${s.status}</span></td>
-                    <td>${isChamando ? `<button class="btn-fin" onclick="finalizar(${s.senha})">FINALIZAR</button>` : '-'}</td>
-                </tr>`;
-            });
-            document.getElementById("lista").innerHTML = html || '<tr><td colspan="4" style="text-align:center; color:#444;">Fila vazia</td></tr>';
-        }
-        setInterval(atualizar, 3000);
-        atualizar();
+        async function chamarProximo() { await fetch(`${API}/chamar`, { method: 'POST' }); atualizarDados(); }
+        async function finalizarAtendimento() { await fetch(`${API}/finalizar`, { method: 'POST' }); atualizarDados(); }
+        async function reiniciarSistema() { if (confirm("Zerar tudo?")) { await fetch(`${API}/reiniciar`, { method: 'POST' }); location.reload(); } }
+        setInterval(atualizarDados, 3000);
+        atualizarDados();
     </script>
 </body>
 </html>

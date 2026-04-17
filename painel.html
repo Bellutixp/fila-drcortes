@@ -2,134 +2,103 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Chamada Premium - Dr. Cortes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. Cortes - Painel</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
-    
     <style>
-        /* ESTILOS GERAIS - DARK MODE */
-        body {
-            background-color: #000000; /* Fundo preto puro */
-            color: #ffffff; /* Texto branco */
-            font-family: 'Oswald', sans-serif; /* Fonte robusta */
-            text-align: center;
+        body { 
+            font-family: 'Oswald', sans-serif; 
+            text-align: center; 
+            padding: 40px; 
             margin: 0;
-            padding: 0;
-            overflow: hidden; /* Evita barras de rolagem */
+            color: #fff;
+            background-color: #000;
+            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+                              url('https://www.transparenttextures.com/patterns/stardust.png');
+            background-attachment: fixed;
+            overflow: hidden;
         }
 
-        /* CONTAINER DA LOGO */
-        .logo-container {
-            background-color: #000000;
-            padding: 30px 0;
-            border-bottom: 2px solid #333333; /* Uma linha sutil separando */
+        .logo-tv { max-width: 300px; margin-bottom: 20px; }
+
+        .foco-painel {
+            background: rgba(15, 15, 15, 0.95);
+            border: 3px solid #ffca28;
+            border-radius: 30px;
+            padding: 50px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 0 50px rgba(255, 202, 40, 0.2);
         }
 
-        .logo-img {
-            max-width: 400px; /* Tamanho da sua logo */
-            height: auto;
-        }
+        .titulo-chamada { color: #ffca28; font-size: 40px; text-transform: uppercase; margin: 0; }
+        .senha-atual { font-size: 200px; font-weight: bold; margin: 20px 0; line-height: 1; }
+        .nome-atual { font-size: 60px; color: #ffca28; text-transform: uppercase; }
 
-        /* ÁREA DA SENHA ATUAL */
-        .atual-container {
-            padding: 80px 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 60vh; /* Ocupa 60% da altura da tela */
-        }
-
-        .num {
-            font-size: 320px; /* Número bem grande */
-            font-weight: 700;
-            margin: 0;
-            line-height: 1; /* Cola o número mais perto */
-            color: #ffffff;
-            text-shadow: 0px 0px 40px rgba(255, 255, 255, 0.4); /* Leve brilho branco */
-            letter-spacing: -10px; /* Estilo moderno */
-        }
-
-        .nome-cliente {
-            font-size: 60px;
-            color: #aaaaaa; /* Nome do cliente em cinza claro */
-            margin-top: -10px;
-            font-weight: 400;
-            text-transform: uppercase; /* Nome em caixa alta */
-        }
-
-        /* ÁREA DO HISTÓRICO NO RODAPÉ */
-        .historico-container {
-            background-color: #0a0a0a; /* Fundo um pouco mais claro no rodapé */
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            padding: 20px 0;
-            border-top: 2px solid #333333;
+        .historico {
+            margin-top: 50px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 20px; /* Espaço entre as senhas */
+            gap: 20px;
         }
 
         .hist-item {
-            font-size: 35px;
-            color: #666666; /* Senhas antigas em cinza escuro */
-            background-color: #111111;
-            padding: 8px 25px;
-            border-radius: 8px;
-            font-weight: 400;
+            background: #111;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            min-width: 150px;
         }
 
+        .hist-senha { font-size: 30px; display: block; color: #888; }
     </style>
 </head>
 <body>
-
-    <div class="logo-container">
-    <img src="logo.png" alt="Dr. Cortes Barbearia" class="logo-img">
+    <img src="logo.png" alt="Dr. Cortes" class="logo-tv">
+    
+    <div class="foco-painel">
+        <p class="titulo-chamada">SENHA ATUAL</p>
+        <div id="senhaDestaque" class="senha-atual">--</div>
+        <div id="nomeDestaque" class="nome-atual">AGUARDANDO</div>
     </div>
 
-    <div class="atual-container">
-        <p class="num" id="num">--</p>
-        <p class="nome-cliente" id="nome">Aguardando...</p>
-    </div>
-
-    <div class="historico-container">
-        <strong style="color: #444; font-size: 20px; margin-right: 15px;">ÚLTIMAS:</strong>
-        <div id="hist" style="display: flex; gap: 20px;">
-            </div>
-    </div>
+    <div class="historico" id="historico">
+        </div>
 
     <script>
-    
-const API = "https://fila-drcortes.onrender.com";
-        let ultima = null;
-        
-        async function check() {
+        const API = "https://fila-drcortes.onrender.com";
+        let ultimaSenhaChamada = null;
+
+        async function atualizarPainel() {
             try {
-                const res = await fetch(`${API}/painel`);
+                const res = await fetch(`${API}/status`);
                 const data = await res.json();
-                
-                // Se a senha mudou, atualiza a tela e toca o som
-                if (data.atual && data.atual.senha !== ultima) {
-                    ultima = data.atual.senha;
-                    document.getElementById("num").innerText = data.atual.senha;
-                    document.getElementById("nome").innerText = data.atual.nome;
-                    
-                    // Som de alerta suave
-                    new Audio("https://www.soundjay.com/buttons/sounds/beep-01a.mp3").play().catch(() => {});
+
+                if (data.atual) {
+                    const senhaTexto = `#${data.atual.senha}`;
+                    document.getElementById("senhaDestaque").innerText = senhaTexto;
+                    document.getElementById("nomeDestaque").innerText = data.atual.nome;
+
+                    // Tocar som se a senha mudar (opcional)
+                    if (ultimaSenhaChamada !== data.atual.senha) {
+                        ultimaSenhaChamada = data.atual.senha;
+                        // const audio = new Audio('chamada.mp3'); audio.play();
+                    }
                 }
-                
-                // Atualiza o histórico (as últimas 5)
-                let html = "";
-                data.historico.forEach(h => html += `<span class="hist-item">${h.senha}</span>`);
-                document.getElementById("hist").innerHTML = html;
-            } catch (err) {
-                console.error("Erro ao carregar o painel");
-            }
+
+                const histDiv = document.getElementById("historico");
+                histDiv.innerHTML = "";
+                data.historico.slice(1, 4).forEach(h => {
+                    const item = document.createElement("div");
+                    item.className = "hist-item";
+                    item.innerHTML = `<span class="hist-senha">#${h.senha}</span><span style="font-size:14px">${h.nome}</span>`;
+                    histDiv.appendChild(item);
+                });
+            } catch (e) { console.log("Erro no painel"); }
         }
-        
-        // Verifica novos dados a cada 3 segundos
-        setInterval(check, 3000);
+
+        setInterval(atualizarPainel, 3000);
+        atualizarPainel();
     </script>
 </body>
 </html>
