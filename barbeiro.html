@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle - Dr. Cortes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Oswald', sans-serif; background: #000; color: white; padding: 20px; margin: 0; text-align: center; }
+        .logo-barbeiro { max-width: 150px; margin: 20px 0; }
+        .container { max-width: 800px; margin: 0 auto; background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        .btn-call { background: #fff; color: #000; padding: 20px; font-size: 22px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 10px; border: none; margin-bottom: 20px; text-transform: uppercase; font-family: 'Oswald', sans-serif; }
+        .btn-call:hover { background: #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #000; }
+        th, td { border-bottom: 1px solid #222; padding: 15px; text-align: left; }
+        th { color: #666; text-transform: uppercase; font-size: 14px; }
+        .btn-fin { background: #cc0000; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 5px; font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; background: #333; color: #fff; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <img src="logo.png" alt="Dr. Cortes" class="logo-barbeiro">
+    
+    <div class="container">
+        <button class="btn-call" onclick="chamar()">CHAMAR PRÓXIMO CLIENTE</button>
+
+        <table>
+            <thead>
+                <tr><th>Senha</th><th>Cliente</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API = "http://192.168.0.110:3000";
+        async function chamar() {
+            const res = await fetch(`${API}/chamar`, { method: 'POST' });
+            if(res.status === 404) alert("Não há ninguém na fila!");
+            atualizar();
+        }
+        async function finalizar(senha) {
+            await fetch(`${API}/finalizar`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ senha })
+            });
+            atualizar();
+        }
+        async function atualizar() {
+            const res = await fetch(`${API}/fila`);
+            const fila = await res.json();
+            let html = "";
+            fila.forEach(s => {
+                const isChamando = s.status === 'chamando';
+                html += `<tr>
+                    <td style="font-weight:bold; font-size: 20px;">${s.senha}</td>
+                    <td>${s.nome}</td>
+                    <td><span class="status-badge" style="${isChamando ? 'background:#fff; color:#000;' : ''}">${s.status}</span></td>
+                    <td>${isChamando ? `<button class="btn-fin" onclick="finalizar(${s.senha})">FINALIZAR</button>` : '-'}</td>
+                </tr>`;
+            });
+            document.getElementById("lista").innerHTML = html || '<tr><td colspan="4" style="text-align:center; color:#444;">Fila vazia</td></tr>';
+        }
+        setInterval(atualizar, 3000);
+        atualizar();
+    </script>
+</body>
+</html>

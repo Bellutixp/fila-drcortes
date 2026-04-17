@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. Cortes - Sua Senha</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Oswald', sans-serif; text-align: center; padding: 20px; background: #000; color: #fff; margin: 0; }
+        .logo-img { max-width: 200px; margin-top: 20px; }
+        .card { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #333; max-width: 350px; margin: 30px auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { padding: 15px; width: 85%; border: 1px solid #444; border-radius: 8px; background: #222; color: #fff; font-size: 16px; margin-bottom: 15px; font-family: 'Oswald', sans-serif; }
+        button { background: #fff; color: #000; border: none; padding: 15px; font-size: 18px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; text-transform: uppercase; font-family: 'Oswald', sans-serif; }
+        .senha-grande { font-size: 80px; color: #fff; font-weight: bold; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .status { font-weight: bold; padding: 15px; border-radius: 8px; background: #222; color: #aaa; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
+        .cancelar { background: transparent; color: #666; font-size: 12px; margin-top: 20px; text-decoration: underline; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <img src="logo.png" alt="Dr. Cortes" class="logo-img">
+    
+    <div class="card">
+        <div id="telaRegistro">
+            <p style="color: #888;">BEM-VINDO À DR. CORTES</p>
+            <input type="text" id="nome" placeholder="DIGITE SEU NOME">
+            <button onclick="gerarSenha()">PEGAR MINHA SENHA</button>
+        </div>
+
+        <div id="telaAcompanhamento" style="display:none;">
+            <p style="color: #888; margin: 0;">SUA SENHA</p>
+            <div class="senha-grande" id="minhaSenha">--</div>
+            <div id="statusTexto" class="status">AGUARDANDO...</div>
+            <button class="cancelar" onclick="sairDaFila()">CANCELAR SENHA</button>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://192.168.0.110:3000";
+        let senhaSalva = localStorage.getItem("drCortesSenha");
+        if (senhaSalva) mostrarAcompanhamento(senhaSalva);
+
+        async function gerarSenha() {
+            const nome = document.getElementById("nome").value;
+            if(!nome) return alert("Digite seu nome.");
+            const res = await fetch(`${API}/gerar`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome })
+            });
+            const data = await res.json();
+            localStorage.setItem("drCortesSenha", data.senha);
+            mostrarAcompanhamento(data.senha);
+        }
+
+        function mostrarAcompanhamento(senha) {
+            senhaSalva = senha;
+            document.getElementById("telaRegistro").style.display = "none";
+            document.getElementById("telaAcompanhamento").style.display = "block";
+            document.getElementById("minhaSenha").innerText = senha;
+            atualizarStatus();
+        }
+
+        async function atualizarStatus() {
+            if (!senhaSalva) return;
+            const res = await fetch(`${API}/fila`);
+            const fila = await res.json();
+            const dadosSenha = fila.find(s => s.senha == senhaSalva);
+            if (!dadosSenha) {
+                localStorage.removeItem("drCortesSenha");
+                location.reload();
+                return;
+            }
+            if (dadosSenha.status === "chamando") {
+                document.getElementById("statusTexto").innerHTML = "🔥 É A SUA VEZ!";
+                document.getElementById("statusTexto").style.color = "#fff";
+                document.getElementById("statusTexto").style.background = "#444";
+            } else {
+                const posicao = fila.filter(s => s.status === "espera" && s.senha < senhaSalva).length;
+                document.getElementById("statusTexto").innerText = `FALTAM ${posicao} PESSOAS`;
+            }
+        }
+        function sairDaFila() {
+            if(confirm("Deseja cancelar?")) { localStorage.removeItem("drCortesSenha"); location.reload(); }
+        }
+        setInterval(atualizarStatus, 3000);
+    </script>
+</body>
+</html>

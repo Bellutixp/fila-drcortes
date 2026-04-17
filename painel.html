@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Chamada Premium - Dr. Cortes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ESTILOS GERAIS - DARK MODE */
+        body {
+            background-color: #000000; /* Fundo preto puro */
+            color: #ffffff; /* Texto branco */
+            font-family: 'Oswald', sans-serif; /* Fonte robusta */
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Evita barras de rolagem */
+        }
+
+        /* CONTAINER DA LOGO */
+        .logo-container {
+            background-color: #000000;
+            padding: 30px 0;
+            border-bottom: 2px solid #333333; /* Uma linha sutil separando */
+        }
+
+        .logo-img {
+            max-width: 400px; /* Tamanho da sua logo */
+            height: auto;
+        }
+
+        /* ÁREA DA SENHA ATUAL */
+        .atual-container {
+            padding: 80px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 60vh; /* Ocupa 60% da altura da tela */
+        }
+
+        .num {
+            font-size: 320px; /* Número bem grande */
+            font-weight: 700;
+            margin: 0;
+            line-height: 1; /* Cola o número mais perto */
+            color: #ffffff;
+            text-shadow: 0px 0px 40px rgba(255, 255, 255, 0.4); /* Leve brilho branco */
+            letter-spacing: -10px; /* Estilo moderno */
+        }
+
+        .nome-cliente {
+            font-size: 60px;
+            color: #aaaaaa; /* Nome do cliente em cinza claro */
+            margin-top: -10px;
+            font-weight: 400;
+            text-transform: uppercase; /* Nome em caixa alta */
+        }
+
+        /* ÁREA DO HISTÓRICO NO RODAPÉ */
+        .historico-container {
+            background-color: #0a0a0a; /* Fundo um pouco mais claro no rodapé */
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            padding: 20px 0;
+            border-top: 2px solid #333333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px; /* Espaço entre as senhas */
+        }
+
+        .hist-item {
+            font-size: 35px;
+            color: #666666; /* Senhas antigas em cinza escuro */
+            background-color: #111111;
+            padding: 8px 25px;
+            border-radius: 8px;
+            font-weight: 400;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="logo-container">
+    <img src="logo.png" alt="Dr. Cortes Barbearia" class="logo-img">
+    </div>
+
+    <div class="atual-container">
+        <p class="num" id="num">--</p>
+        <p class="nome-cliente" id="nome">Aguardando...</p>
+    </div>
+
+    <div class="historico-container">
+        <strong style="color: #444; font-size: 20px; margin-right: 15px;">ÚLTIMAS:</strong>
+        <div id="hist" style="display: flex; gap: 20px;">
+            </div>
+    </div>
+
+    <script>
+        const API = "http://192.168.0.110:3000";
+        let ultima = null;
+        
+        async function check() {
+            try {
+                const res = await fetch(`${API}/painel`);
+                const data = await res.json();
+                
+                // Se a senha mudou, atualiza a tela e toca o som
+                if (data.atual && data.atual.senha !== ultima) {
+                    ultima = data.atual.senha;
+                    document.getElementById("num").innerText = data.atual.senha;
+                    document.getElementById("nome").innerText = data.atual.nome;
+                    
+                    // Som de alerta suave
+                    new Audio("https://www.soundjay.com/buttons/sounds/beep-01a.mp3").play().catch(() => {});
+                }
+                
+                // Atualiza o histórico (as últimas 5)
+                let html = "";
+                data.historico.forEach(h => html += `<span class="hist-item">${h.senha}</span>`);
+                document.getElementById("hist").innerHTML = html;
+            } catch (err) {
+                console.error("Erro ao carregar o painel");
+            }
+        }
+        
+        // Verifica novos dados a cada 3 segundos
+        setInterval(check, 3000);
+    </script>
+</body>
+</html>
