@@ -22,6 +22,21 @@ app.post("/gerar", (req, res) => {
     res.json(novaSenha);
 });
 
+async function finalizarAtendimento() {
+    // ... seu código atual
+}
+
+// ADICIONE ESTA FUNÇÃO AQUI
+async function reiniciarSistema() {
+    if (confirm("Deseja zerar a fila e voltar para a senha 1?")) {
+        await fetch(`${API}/reiniciar`, { method: "POST" });
+        location.reload(); 
+    }
+}
+
+
+
+
 app.get("/fila", (req, res) => res.json(fila));
 
 app.post("/chamar", (req, res) => {
