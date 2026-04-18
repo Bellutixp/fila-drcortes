@@ -6,86 +6,126 @@
     <title>Dr. Cortes - Barbeiro</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Estilos Gerais */
         body { font-family: 'Oswald', sans-serif; text-align: center; padding: 20px; background: #000; color: #fff; }
-        .card { background: #111; padding: 25px; border-radius: 15px; border: 2px solid #ffca28; max-width: 400px; margin: 0 auto; }
+        .logo { max-width: 180px; margin-bottom: 20px; }
+        .card { background: #111; padding: 25px; border-radius: 15px; border: 2px solid #ffca28; max-width: 400px; margin: 0 auto; box-shadow: 0 0 20px rgba(255, 202, 40, 0.1); }
+        
+        /* Box de Atendimento */
         .atendimento-box { background: #0a0a0a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; }
-        .nome-foco { font-size: 30px; color: #ffca28; display: block; text-transform: uppercase; }
-        button { background: #ffca28; color: #000; border: none; padding: 18px; font-size: 18px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; }
-        .lista { text-align: left; margin-top: 20px; padding: 10px; background: #050505; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #222; }
-        ul { list-style: none; padding: 0; }
-        li { padding: 10px; border-bottom: 1px solid #222; color: #bbb; }
+        .nome-foco { font-size: 32px; color: #ffca28; display: block; text-transform: uppercase; font-weight: bold; }
+        
+        /* Botões */
+        button { background: #ffca28; color: #000; border: none; padding: 18px; font-size: 18px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; transition: 0.3s; text-transform: uppercase; }
+        button:active { transform: scale(0.98); }
+        .btn-fim { background: #333; color: #fff; }
+        
+        /* --- O ROLADOR AMARELO --- */
+        .lista { 
+            text-align: left; 
+            margin-top: 20px; 
+            padding: 10px; 
+            background: #050505; 
+            border-radius: 8px; 
+            max-height: 250px; /* Altura máxima da lista */
+            overflow-y: auto;  /* Ativa a rolagem */
+            border: 1px solid #222;
+        }
+
+        /* Estilização da Barra de Rolagem (Chrome, Edge, Safari) */
+        .lista::-webkit-scrollbar { width: 8px; }
+        .lista::-webkit-scrollbar-track { background: #0a0a0a; }
+        .lista::-webkit-scrollbar-thumb { background: #ffca28; border-radius: 10px; }
+
+        /* Lista de Nomes */
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 12px; border-bottom: 1px solid #222; color: #bbb; font-size: 16px; }
+        li:last-child { border-bottom: none; }
+        
+        .btn-zerar { background: none; color: #ff4444; border: 1px solid #ff4444; font-size: 11px; margin-top: 25px; padding: 10px; width: auto; opacity: 0.6; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:#ffca28">PAINEL DO BARBEIRO</h2>
+    <h2 style="color:#ffca28; margin-bottom: 5px;">DR. CORTES</h2>
+    <p style="margin-top:0; color:#666; font-size: 14px;">PAINEL DE CONTROLE</p>
     
     <div class="card">
         <div class="atendimento-box">
-            <p style="margin:0; font-size:11px; color:#666;">ATENDENDO AGORA:</p>
-            <span id="nomeAtual" class="nome-foco">---</span>
+            <p style="margin:0; font-size:11px; color:#666; letter-spacing: 2px;">ATENDENDO AGORA:</p>
+            <span id="nomeAtual" class="nome-foco">VAZIO</span>
         </div>
 
         <button onclick="proximo()">🔔 CHAMAR PRÓXIMO</button>
-        <button style="background:#333; color:#fff;" onclick="finalizar()">✅ FINALIZAR</button>
+        <button class="btn-fim" onclick="finalizar()">✅ FINALIZAR ATENDIMENTO</button>
         
         <div class="lista">
-            <p style="color:#ffca28; font-size:12px; margin:0;">FILA DE ESPERA:</p>
+            <p style="color:#ffca28; margin:0 0 10px 0; font-size:12px; font-weight:bold; position: sticky; top: 0; background: #050505; padding-bottom: 5px;">PRÓXIMOS DA FILA:</p>
             <ul id="listaEspera"></ul>
         </div>
 
-        <button onclick="resetTotal()" style="background:none; color:red; font-size:10px; margin-top:20px; border:1px solid red; width:auto; padding:5px;">REINICIAR TUDO</button>
+        <button class="btn-zerar" onclick="zerarFilaTotal()">⚠️ REINICIAR TODA A FILA</button>
     </div>
 
     <script>
-        const API = "https://fila-drcortes.onrender.com"; // VERIFIQUE SE ESTÁ EXATAMENTE ASSIM
+        const API = "https://fila-drcortes.onrender.com";
 
-        async function atualizar() {
+        async function carregarDados() {
             try {
-                // Pega quem está sendo atendido
-                const resP = await fetch(`${API}/painel`);
+                // Atualiza quem está na cadeira
+                const resP = await fetch(API + "/painel");
                 const p = await resP.json();
-                document.getElementById("nomeAtual").innerText = p.atual ? `#${p.atual.senha} - ${p.atual.nome}` : "VAZIO";
+                if (p.atual) {
+                    document.getElementById("nomeAtual").innerText = "#" + p.atual.senha + " - " + p.atual.nome;
+                } else {
+                    document.getElementById("nomeAtual").innerText = "VAZIO";
+                }
 
-                // Pega a fila de espera
-                const resF = await fetch(`${API}/fila`);
+                // Atualiza a lista de espera
+                const resF = await fetch(API + "/fila");
                 const f = await resF.json();
                 let html = "";
                 f.forEach(s => {
                     if(s.status === "espera") html += `<li>#${s.senha} - ${s.nome}</li>`;
                 });
-                document.getElementById("listaEspera").innerHTML = html || "<li>Fila vazia</li>";
-            } catch (e) {
-                console.log("Erro ao conectar na API");
+                document.getElementById("listaEspera").innerHTML = html || "<li>Ninguém na fila</li>";
+            } catch (e) { 
+                console.error("Erro ao conectar com o servidor."); 
             }
         }
 
         async function proximo() {
-            await fetch(`${API}/chamar`, { method: "POST" });
-            atualizar();
+            await fetch(API + "/chamar", { method: "POST" });
+            carregarDados();
         }
 
         async function finalizar() {
-            const atual = document.getElementById("nomeAtual").innerText;
-            if(atual === "VAZIO") return;
-            const senha = atual.split(" ")[0].replace("#", "");
-            await fetch(`${API}/finalizar`, {
+            const atualStr = document.getElementById("nomeAtual").innerText;
+            if(atualStr === "VAZIO") return alert("Não há ninguém para finalizar!");
+            
+            // Extrai o número da senha do texto
+            const senha = atualStr.split(" ")[0].replace("#", "");
+            
+            await fetch(API + "/finalizar", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ senha: senha })
             });
-            atualizar();
+            carregarDados();
         }
 
-        async function resetTotal() {
-            if(confirm("Zerar tudo?")) {
-                await fetch(`${API}/reiniciar`, { method: "POST" });
-                location.reload();
+        async function zerarFilaTotal() {
+            if(confirm("Isso apagará todas as senhas. Confirma?")) {
+                try {
+                    await fetch(API + "/reiniciar", { method: "POST" });
+                    location.reload();
+                } catch (e) { alert("Erro ao zerar."); }
             }
         }
 
-        setInterval(atualizar, 3000);
-        atualizar();
+        // Atualiza a tela a cada 4 segundos
+        setInterval(carregarDados, 4000);
+        carregarDados();
     </script>
 </body>
 </html>
