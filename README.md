@@ -40,3 +40,11 @@ O projeto conta com interfaces distintas para garantir a melhor experiência tan
 1. Clone o repositório:
    ```bash
    git clone [https://github.com/bellutixp/dr-cortes.git](https://github.com/bellutixp/dr-cortes.git)
+
+
+## 🧠 Decisões de Projeto
+Este sistema foi criado para resolver a falta de organização em agendamentos de pequeno porte. 
+Optei por uma arquitetura simples e funcional, focando em:
+1. **Baixo Custo:** Uso de tecnologias estáticas para rodar sem necessidade de servidor pago.
+2. **UX Focada:** Interfaces distintas para reduzir o erro operacional do barbeiro.
+3. **Escalabilidade:** Código modular que permite adicionar novos serviços facilmente.
